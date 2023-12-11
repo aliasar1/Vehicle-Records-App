@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 
-const mongoUrl = 'mongodb://localhost:27017';
+const mongoUrl = 'mongodb://127.0.0.1';
 const dbName = 'VehicleCRUD';
 
 let db;
