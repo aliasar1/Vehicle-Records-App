@@ -1,12 +1,18 @@
 const express = require('express');
-const cors = require("cors");
+const cors = require('cors');
+const { connectToDatabase } = require('./config/db');
+const vehcileRoutes = require('./routes/vehiclesRoutes');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 
-const vehicleRoutes = require('./routes/vehiclesRoutes');
-app.use('/api/vehicles', vehicleRoutes);
+connectToDatabase();
 
-const port = process.env.PORT || 8080;
-app.listen(port, () => console.log(`Listening on port ${port}...`));
+app.use('/vehcile', vehcileRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
