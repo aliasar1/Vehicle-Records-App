@@ -29,7 +29,7 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           backgroundColor: Colors.teal,
           title: const Text(
-            "Vehicles Log",
+            "Vehicles Record",
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            _showDialogBox();
+            _showDialogBox(false, null);
           },
           backgroundColor: Colors.teal,
           child: const Icon(
@@ -68,67 +68,100 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildVehicleList(List<Vehicle> vehicles) {
-    return ListView.builder(
-      itemCount: vehicles.length,
-      itemBuilder: (context, index) {
-        final vehicle = vehicles[index];
-        return ListTile(
-          title: Text(vehicle.name),
-          subtitle: Text(vehicle.variant),
-          leading: IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.edit,
-              color: Colors.teal,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: vehicles.length,
+            itemBuilder: (context, index) {
+              final vehicle = vehicles[index];
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  tileColor: Colors.grey.shade300,
+                  title: Text(vehicle.name),
+                  subtitle: Text(vehicle.variant),
+                  leading: IconButton(
+                    onPressed: () {
+                      _showDialogBox(true, vehicle);
+                    },
+                    icon: const Icon(
+                      Icons.edit,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  trailing: IconButton(
+                    onPressed: () {
+                      _deleteVehicle(vehicle.id);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Vehicle deleted successfully."),
+                      ));
+                    },
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-          trailing: IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.delete,
-              color: Colors.red,
-            ),
-          ),
-        );
-      },
+        ),
+        const SizedBox(
+          height: 65,
+        ),
+      ],
     );
   }
 
-  Future<void> _showDialogBox() async {
+  Future<void> _showDialogBox(bool isEdit, Vehicle? vehicle) async {
+    if (isEdit) {
+      nameController.text = vehicle!.name;
+      variantController.text = vehicle.variant;
+    }
     await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add Vehicle'),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  onChanged: (value) {
-                    nameController.text = value;
-                  },
-                  decoration: const InputDecoration(labelText: 'Name'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Vehicle name cannot be empty.";
-                    }
-                    return null;
-                  },
+          title: Text(
+            isEdit ? 'Edit Vehicle' : 'Add Vehicle',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.23,
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      onChanged: (value) {
+                        nameController.text = value;
+                      },
+                      decoration: const InputDecoration(labelText: 'Name'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Vehicle name cannot be empty.";
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      onChanged: (value) {
+                        nameController.text = value;
+                      },
+                      decoration: const InputDecoration(labelText: 'Variant'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Vehicle variant cannot be empty.";
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                 ),
-                TextFormField(
-                  onChanged: (value) {
-                    nameController.text = value;
-                  },
-                  decoration: const InputDecoration(labelText: 'Variant'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Vehicle variant cannot be empty.";
-                    }
-                    return null;
-                  },
-                ),
-              ],
+              ),
             ),
           ),
           actions: [
@@ -139,16 +172,32 @@ class _HomePageState extends State<HomePage> {
               child: const Text('Cancel'),
             ),
             TextButton(
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(Colors.teal),
+                foregroundColor: MaterialStateProperty.all(Colors.white),
+              ),
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  _addVehicle(
-                      nameController.text.trim(), nameController.text.trim());
-                  Navigator.of(context).pop();
+                  if (isEdit) {
+                    _editVehicle(vehicle!);
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Vehicle edited successfully.")));
+                  } else {
+                    _addVehicle(
+                      nameController.text.trim(),
+                      nameController.text.trim(),
+                    );
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Vehicle added successfully.")));
+                  }
                 }
               },
-              child: const Text('Add'),
+              child: isEdit ? const Text('Edit') : const Text('Add'),
             ),
           ],
+          scrollable: true,
         );
       },
     );
@@ -161,7 +210,35 @@ class _HomePageState extends State<HomePage> {
         vehiclesFuture = VehicleApi.getAllVehicles();
       });
     } catch (e) {
-      print('Error adding vehicle: $e');
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  void _deleteVehicle(String id) async {
+    try {
+      await VehicleApi.deleteVehicle(id);
+      setState(() {
+        vehiclesFuture = VehicleApi.getAllVehicles();
+      });
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  void _editVehicle(Vehicle vehicle) async {
+    try {
+      await VehicleApi.updateVehicle(vehicle.id, vehicle.name, vehicle.variant);
+      setState(() {
+        vehiclesFuture = VehicleApi.getAllVehicles();
+      });
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 }
