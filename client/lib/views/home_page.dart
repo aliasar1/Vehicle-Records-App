@@ -121,6 +121,7 @@ class _HomePageState extends State<HomePage> {
       variantController.text = vehicle.variant;
     }
     await showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -169,6 +170,7 @@ class _HomePageState extends State<HomePage> {
           actions: [
             TextButton(
               onPressed: () {
+                clearFields();
                 Navigator.of(context).pop();
               },
               child: const Text('Cancel'),
@@ -181,7 +183,7 @@ class _HomePageState extends State<HomePage> {
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   if (isEdit) {
-                    _updateVehicle(vehicle!);
+                    _editVehicle(vehicle!);
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text("Vehicle updated successfully.")));
@@ -194,6 +196,7 @@ class _HomePageState extends State<HomePage> {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text("Vehicle added successfully.")));
                   }
+                  clearFields();
                 }
               },
               child: isEdit ? const Text('Edit') : const Text('Add'),
@@ -231,7 +234,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _updateVehicle(Vehicle vehicle) async {
+  void _editVehicle(Vehicle vehicle) async {
     try {
       await VehicleApi.updateVehicle(vehicle.id, nameController.text.trim(),
           variantController.text.trim());
@@ -244,5 +247,10 @@ class _HomePageState extends State<HomePage> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString())));
     }
+  }
+
+  void clearFields() {
+    nameController.clear();
+    variantController.clear();
   }
 }
