@@ -190,7 +190,7 @@ class _HomePageState extends State<HomePage> {
                   } else {
                     _addVehicle(
                       nameController.text.trim(),
-                      nameController.text.trim(),
+                      variantController.text.trim(),
                     );
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
