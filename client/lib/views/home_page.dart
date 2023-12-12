@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> {
               return Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ListTile(
-                  tileColor: Colors.grey.shade300,
+                  tileColor: Colors.grey.shade200,
                   title: Text(vehicle.name),
                   subtitle: Text(vehicle.variant),
                   leading: IconButton(
@@ -136,6 +136,7 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   children: [
                     TextFormField(
+                      controller: nameController,
                       onChanged: (value) {
                         nameController.text = value;
                       },
@@ -148,8 +149,9 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                     TextFormField(
+                      controller: variantController,
                       onChanged: (value) {
-                        nameController.text = value;
+                        variantController.text = value;
                       },
                       decoration: const InputDecoration(labelText: 'Variant'),
                       validator: (value) {
@@ -179,10 +181,10 @@ class _HomePageState extends State<HomePage> {
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   if (isEdit) {
-                    _editVehicle(vehicle!);
+                    _updateVehicle(vehicle!);
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Vehicle edited successfully.")));
+                        content: Text("Vehicle updated successfully.")));
                   } else {
                     _addVehicle(
                       nameController.text.trim(),
@@ -229,9 +231,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _editVehicle(Vehicle vehicle) async {
+  void _updateVehicle(Vehicle vehicle) async {
     try {
-      await VehicleApi.updateVehicle(vehicle.id, vehicle.name, vehicle.variant);
+      await VehicleApi.updateVehicle(vehicle.id, nameController.text.trim(),
+          variantController.text.trim());
+
       setState(() {
         vehiclesFuture = VehicleApi.getAllVehicles();
       });

@@ -46,7 +46,7 @@ class VehicleApi {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'name': name, 'variant': variant}),
     );
-
+    print(jsonDecode(response.body));
     return jsonDecode(response.body);
   }
 
